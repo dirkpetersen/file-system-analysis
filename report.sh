@@ -1,7 +1,7 @@
 #! /bin/bash
 
-SQLFILE=$1
-PFOLDER=$2
+PFOLDER=$1
+SQLFILE=$2
 
 export PWALK_TABLE="${PFOLDER}/*.parquet"
 

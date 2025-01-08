@@ -45,7 +45,7 @@ process_file() {
     local FILE="$1"
     if [[ "$FILE" == *.csv ]]; then
         FILENAME=$(basename "$FILE")
-        FILEBASE="${FILENAME%.*}"
+        FILEBASE="${DEST}/$(basename "${FILENAME%.*}")"
         TEMP_FILE="${TEMP_DIR}/${FILENAME}"
         
         # Only process if parquet doesn't exist
@@ -64,7 +64,7 @@ process_file() {
             if ! duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
                 read_csv_auto('${TEMP_FILE}', \
                 ignore_errors=true, header=true)) TO \
-                '${DEST}/${FILEBASE}.parquet' (FORMAT 'parquet');" 2>&1; then
+                '${FILEBASE}.parquet' (FORMAT 'parquet');" 2>&1; then
                 echo "Failed!"
                 echo "Error converting ${FILENAME} to parquet"
                 rm -f "$TEMP_FILE"

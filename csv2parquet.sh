@@ -45,13 +45,15 @@ echo "Processing directory: $SRC"
 for FILE in $(ls -1 ${SRC}); do
     FILEBASE="${FILE%.*}"
     if [[ "${FILE##*.}" == "csv" ]]; then
-        if ! [[ -f "${SRC}/${FILEBASE}.parquet" ]]; then
-            echo "Converting ${FILE} to ${FILEBASE}.parquet ... "
+        if ! [[ -f "${DEST}/${FILEBASE}.parquet" ]]; then
+            printf "Converting ${FILE} to ${FILEBASE}.parquet ... "
             duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
                 read_csv_auto('"${SRC}/${FILE}"', \
                 ignore_errors=true, header=true)) TO \
-                '"${SRC}/${FILEBASE}.parquet"';"
+                '"${DEST}/${FILEBASE}.parquet"';"
             echo "Done."
+        else 
+           echo "File already exists: ${DEST}/${FILEBASE}.parquet"
         fi
     fi
 done

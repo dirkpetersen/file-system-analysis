@@ -9,19 +9,20 @@ if ! command -v duckdb &> /dev/null; then
     exit 1
 fi
 
-# Check if at least one argument is provided
-if [ $# -eq 0 ]; then
-    echo "Usage: $0 <source_dir|files...> [destination_dir]"
+# Check arguments
+if [ $# -eq 0 ] || [ $# -gt 2 ]; then
+    echo "Usage: $0 <source_dir> [destination_dir]"
     exit 1
 fi
 
 # Set source and destination
-if [ $# -eq 1 ]; then
-    SRC=$1
-    DEST="."
-else
-    SRC=$1
-    DEST="${@: -1}"
+SRC=$1
+DEST=${2:-.}  # Use second arg if provided, otherwise use current directory
+
+# Validate source is a directory
+if [ ! -d "$SRC" ]; then
+    echo "Error: '$SRC' is not a directory"
+    exit 1
 fi
 
 # Create temporary directory in /dev/shm for current user
@@ -79,24 +80,13 @@ process_file() {
     fi
 }
 
-# Process files based on input type
-if [ -d "$SRC" ]; then
-    echo "Processing directory: $SRC"
-    for FILE in "$SRC"/*.csv; do
-        if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
-            process_file "$FILE"
-        fi
-    done
-else
-    # Process individual files
-    for FILE in "${@:1:$(($#-1))}"; do
-        if [ -f "$FILE" ]; then
-            process_file "$FILE"
-        else
-            echo "Error: '$FILE' does not exist or is not a file"
-        fi
-    done
-fi
+# Process all CSV files in directory
+echo "Processing directory: $SRC"
+for FILE in "$SRC"/*.csv; do
+    if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
+        process_file "$FILE"
+    fi
+done
 
 # Cleanup temporary directory if empty
 rmdir "$TEMP_DIR" 2>/dev/null || true

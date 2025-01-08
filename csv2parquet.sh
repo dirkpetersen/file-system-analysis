@@ -40,55 +40,20 @@ PRAGMAS=""
 echo "Starting CSV to Parquet conversion process..."
 echo "Destination directory: $DEST"
 
-# Function to process a single file
-process_file() {
-    local FILE="$1"
-    if [[ "$FILE" == *.csv ]]; then
-        FILENAME=$(basename "$FILE")
-        FILEBASE="${DEST}/$(basename "${FILENAME%.*}")"
-        TEMP_FILE="${TEMP_DIR}/${FILENAME}"
-        
-        # Only process if parquet doesn't exist
-        if ! [[ -f "${FILEBASE}.parquet" ]]; then
-            echo "Processing ${FILENAME}..."
-            
-            # Convert to UTF-8 and optionally clean with sed
-            printf "  Converting / cleaning ${FILEBASE} ... "
-            iconv -f ISO-8859-1 -t UTF-8 "$FILE" > "${TEMP_FILE}"
-            # Potentially replace strings in the path 
-            #sed -E 's#/string1/#/#g; s#/string2/#/#g' > "$TEMP_FILE"
-            echo "Done."
-            
-            # Convert to parquet
-            printf "  Converting ${FILEBASE} to parquet... "
-            if ! duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
-                read_csv_auto('${TEMP_FILE}', \
+# Process all files in directory
+echo "Processing directory: $SRC"
+for FILE in $(ls -1 ${SRC}); do
+    FILEBASE="${FILE%.*}"
+    if [[ "${FILE##*.}" == "csv" ]]; then
+        if ! [[ -f "${SRC}/${FILEBASE}.parquet" ]]; then
+            echo "Converting ${FILE} to ${FILEBASE}.parquet ... "
+            duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
+                read_csv_auto('"${SRC}/${FILE}"', \
                 ignore_errors=true, header=true)) TO \
-                '${FILEBASE}.parquet' (FORMAT 'parquet');" 2>&1; then
-                echo "Failed!"
-                echo "Error converting ${FILENAME} to parquet"
-                rm -f "$TEMP_FILE"
-                return 1
-            fi
+                '"${SRC}/${FILEBASE}.parquet"';"
             echo "Done."
-            
-            # Remove temporary file immediately
-            rm -f "$TEMP_FILE"
-        else
-            echo "Skipping ${FILENAME} - parquet file already exists"
         fi
     fi
-}
-
-# Process all CSV files in directory
-echo "Processing directory: $SRC"
-for FILE in "$SRC"/*.csv; do
-    if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
-        process_file "$FILE"
-    fi
 done
-
-# Cleanup temporary directory if empty
-rmdir "$TEMP_DIR" 2>/dev/null || true
 
 echo "Conversion process completed!"

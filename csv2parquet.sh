@@ -17,7 +17,7 @@ fi
 
 # Set source and destination to absolute paths
 SRC=$(realpath "$1")
-DEST=$(realpath "${2:-.}")  # Use second arg if provided, otherwise use current directory
+DEST=$(realpath "${2:-$1}")  # Use second arg if provided, otherwise use current directory
 
 # Validate source is a directory
 if [ ! -d "$SRC" ]; then

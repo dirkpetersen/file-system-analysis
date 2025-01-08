@@ -5,5 +5,5 @@ PFOLDER=$2
 
 export PWALK_TABLE="${PFOLDER}/*.parquet"
 
-duckdb < <(envsubst < ${SQLFILE})
+duckdb --csv < <(envsubst < ${SQLFILE})
 

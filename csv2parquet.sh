@@ -49,7 +49,7 @@ process_file() {
         TEMP_FILE="${TEMP_DIR}/${FILENAME}"
         
         # Only process if parquet doesn't exist
-        if ! [[ -f "${DEST}/${FILEBASE}.parquet" ]]; then
+        if ! [[ -f "${FILEBASE}.parquet" ]]; then
             echo "Processing ${FILENAME}..."
             
             # Convert to UTF-8 and optionally clean with sed

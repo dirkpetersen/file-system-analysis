@@ -15,9 +15,9 @@ if [ $# -eq 0 ] || [ $# -gt 2 ]; then
     exit 1
 fi
 
-# Set source and destination
-SRC=$1
-DEST=${2:-.}  # Use second arg if provided, otherwise use current directory
+# Set source and destination to absolute paths
+SRC=$(realpath "$1")
+DEST=$(realpath "${2:-.}")  # Use second arg if provided, otherwise use current directory
 
 # Validate source is a directory
 if [ ! -d "$SRC" ]; then
@@ -30,7 +30,6 @@ TEMP_DIR="/dev/shm/$USER"
 mkdir -p "$TEMP_DIR"
 
 # Create destination directory if it doesn't exist
-DEST=$(realpath "$DEST")
 mkdir -p "$DEST"
 
 # Set DuckDB pragmas for better performance

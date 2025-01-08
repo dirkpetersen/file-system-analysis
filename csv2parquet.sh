@@ -16,17 +16,9 @@ if [ $# -eq 0 ]; then
 fi
 
 # Set source and destination
+SRC=$1
 if [ $# -eq 1 ]; then
-    DEST="."
-else
-    # If last argument is a directory, use it as destination
-    if [ -d "${!#}" ]; then
-        DEST="${!#}"
-        # Remove last argument from $@
-        set -- "${@:1:$(($#-1))}"
-    else
-        DEST="."
-    fi
+    DEST=$1
 fi
 
 # Create temporary directory in /dev/shm for current user
@@ -37,15 +29,14 @@ mkdir -p "$TEMP_DIR"
 mkdir -p "$DEST"
 
 # Validate inputs exist
-for SRC in "$@"; do
-    if [ ! -e "$SRC" ]; then
-        echo "Error: '$SRC' does not exist"
-        exit 1
-    fi
-done
+if [[ ! -d "$SRC" ]]; then
+    echo "Error: '$SRC' does not exist"
+    exit 1
+fi
 
 # Set DuckDB pragmas for better performance
-PRAGMAS="PRAGMA memory_limit='4GB'; PRAGMA threads=4;"
+PRAGMAS=""
+#PRAGMAS="PRAGMA memory_limit='4GB'; PRAGMA threads=4;"
 
 # Start process
 echo "Starting CSV to Parquet conversion process..."
@@ -60,7 +51,7 @@ process_file() {
         TEMP_FILE="${TEMP_DIR}/${FILENAME}"
         
         # Only process if parquet doesn't exist
-        if ! [ -f "${DEST}/${FILEBASE}.parquet" ]; then
+        if ! [[ -f "${DEST}/${FILEBASE}.parquet" ]]; then
             echo "Processing ${FILENAME}..."
             
             # Convert to UTF-8 and optionally clean with sed
@@ -91,20 +82,12 @@ process_file() {
     fi
 }
 
-if [ -d "$1" ]; then
-    echo "Processing directory: $1"
-    for FILE in "$1"/*.csv; do
-        if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
-            process_file "$FILE"
-        fi
-    done
-else
-    for FILE in "$@"; do
+echo "Processing directory: $1"
+for FILE in "$SRC"/*.csv; do
+    if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
         process_file "$FILE"
-    done
-fi
-
-
+    fi
+done
 
 # Cleanup temporary directory if empty
 rmdir "$TEMP_DIR" 2>/dev/null || true

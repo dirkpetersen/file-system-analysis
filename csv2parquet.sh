@@ -46,16 +46,28 @@ for FILE in $(ls -1 ${SRC}); do
     FILEBASE="${FILE%.*}"
     if [[ "${FILE##*.}" == "csv" ]]; then
         if ! [[ -f "${DEST}/${FILEBASE}.parquet" ]]; then
+            # Convert to UTF-8 in temporary directory
+            printf "Converting ${FILE} to UTF-8... "
+            iconv -f ISO-8859-1 -t UTF-8 "${SRC}/${FILE}" > "${TEMP_DIR}/${FILE}"
+            echo "Done."
+            
+            # Convert to parquet
             printf "Converting ${FILE} to ${FILEBASE}.parquet ... "
             duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
-                read_csv_auto('"${SRC}/${FILE}"', \
+                read_csv_auto('${TEMP_DIR}/${FILE}', \
                 ignore_errors=true, header=true)) TO \
                 '"${DEST}/${FILEBASE}.parquet"';"
             echo "Done."
+            
+            # Clean up temporary file
+            rm -f "${TEMP_DIR}/${FILE}"
         else 
            echo "File already exists: ${DEST}/${FILEBASE}.parquet"
         fi
     fi
 done
+
+# Cleanup temporary directory if empty
+rmdir "$TEMP_DIR" 2>/dev/null || true
 
 echo "Conversion process completed!"

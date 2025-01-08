@@ -44,8 +44,8 @@ for SRC in "$@"; do
     fi
 done
 
-# Set DuckDB pragmas
-PRAGMAS=""
+# Set DuckDB pragmas for better performance
+PRAGMAS="PRAGMA memory_limit='4GB'; PRAGMA threads=4;"
 
 # Start process
 echo "Starting CSV to Parquet conversion process..."
@@ -72,10 +72,15 @@ process_file() {
             
             # Convert to parquet
             printf "  Converting ${FILEBASE} to parquet... "
-            duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
+            if ! duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
                 read_csv_auto('${TEMP_FILE}', \
                 ignore_errors=true, header=true)) TO \
-                '${DEST}/${FILEBASE}.parquet';"
+                '${DEST}/${FILEBASE}.parquet';" 2>&1; then
+                echo "Failed!"
+                echo "Error converting ${FILENAME} to parquet"
+                rm -f "$TEMP_FILE"
+                return 1
+            fi
             echo "Done."
             
             # Remove temporary file immediately

@@ -16,9 +16,12 @@ if [ $# -eq 0 ]; then
 fi
 
 # Set source and destination
-SRC=$1
 if [ $# -eq 1 ]; then
-    DEST=$1
+    SRC=$1
+    DEST="."
+else
+    SRC=$1
+    DEST="${@: -1}"
 fi
 
 # Create temporary directory in /dev/shm for current user
@@ -27,12 +30,6 @@ mkdir -p "$TEMP_DIR"
 
 # Create destination directory if it doesn't exist
 mkdir -p "$DEST"
-
-# Validate inputs exist
-if [[ ! -d "$SRC" ]]; then
-    echo "Error: '$SRC' does not exist"
-    exit 1
-fi
 
 # Set DuckDB pragmas for better performance
 PRAGMAS=""
@@ -82,12 +79,24 @@ process_file() {
     fi
 }
 
-echo "Processing directory: $1"
-for FILE in "$SRC"/*.csv; do
-    if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
-        process_file "$FILE"
-    fi
-done
+# Process files based on input type
+if [ -d "$SRC" ]; then
+    echo "Processing directory: $SRC"
+    for FILE in "$SRC"/*.csv; do
+        if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
+            process_file "$FILE"
+        fi
+    done
+else
+    # Process individual files
+    for FILE in "${@:1:$(($#-1))}"; do
+        if [ -f "$FILE" ]; then
+            process_file "$FILE"
+        else
+            echo "Error: '$FILE' does not exist or is not a file"
+        fi
+    done
+fi
 
 # Cleanup temporary directory if empty
 rmdir "$TEMP_DIR" 2>/dev/null || true

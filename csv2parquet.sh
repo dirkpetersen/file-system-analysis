@@ -75,7 +75,7 @@ process_file() {
             if ! duckdb -s "${PRAGMAS} COPY (SELECT * FROM \
                 read_csv_auto('${TEMP_FILE}', \
                 ignore_errors=true, header=true)) TO \
-                '${DEST}/${FILEBASE}.parquet' (type='parquet');" 2>&1; then
+                '${DEST}/${FILEBASE}.parquet' (FORMAT 'parquet');" 2>&1; then
                 echo "Failed!"
                 echo "Error converting ${FILENAME} to parquet"
                 rm -f "$TEMP_FILE"

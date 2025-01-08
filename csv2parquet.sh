@@ -30,6 +30,7 @@ TEMP_DIR="/dev/shm/$USER"
 mkdir -p "$TEMP_DIR"
 
 # Create destination directory if it doesn't exist
+DEST=$(realpath "$DEST")
 mkdir -p "$DEST"
 
 # Set DuckDB pragmas for better performance

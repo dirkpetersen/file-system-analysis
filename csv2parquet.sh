@@ -94,7 +94,9 @@ process_file() {
 if [ -d "$1" ]; then
     echo "Processing directory: $1"
     for FILE in "$1"/*.csv; do
-        process_file "$FILE"
+        if [ -f "$FILE" ]; then  # Check if file exists (handles no matches)
+            process_file "$FILE"
+        fi
     done
 else
     for FILE in "$@"; do

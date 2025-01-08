@@ -11,22 +11,44 @@ fi
 
 # Check if at least one argument is provided
 if [ $# -eq 0 ]; then
-    echo "Usage: $0 <source_dir> [destination_dir]"
+    echo "Usage: $0 <source_dir|files...> [destination_dir]"
     exit 1
 fi
 
-# Set source and destination directories
-SRC="$1"
+# Set source and destination
 if [ $# -eq 1 ]; then
-    DEST="$1"
+    DEST="."
 else
-    DEST="$2"
+    # If last argument is a directory, use it as destination
+    if [ -d "${!#}" ]; then
+        DEST="${!#}"
+        # Remove last argument from $@
+        set -- "${@:1:$(($#-1))}"
+    else
+        DEST="."
+    fi
 fi
 
-# Validate source directory exists
-if [ ! -d "$SRC" ]; then
-    echo "Error: Source directory '$SRC' does not exist"
-    exit 1
+# Create destination directory if it doesn't exist
+mkdir -p "$DEST"
+
+# Validate inputs exist
+for SRC in "$@"; do
+    if [ ! -e "$SRC" ]; then
+        echo "Error: '$SRC' does not exist"
+        exit 1
+    fi
+}
+
+if [ -d "$1" ]; then
+    echo "Processing directory: $1"
+    for FILE in "$1"/*.csv; do
+        process_file "$FILE"
+    done
+else
+    for FILE in "$@"; do
+        process_file "$FILE"
+    done
 fi
 
 # Create destination directory if it doesn't exist
@@ -39,13 +61,13 @@ mkdir -p "$TEMP_DIR"
 # Set DuckDB pragmas
 PRAGMAS=""
 
-# Process files in a single loop
+# Process files
 echo "Starting CSV to Parquet conversion process..."
-echo "Source directory: $SRC"
 echo "Destination directory: $DEST"
 
-for FILE in "$SRC"/*.csv; do
-    if [ -f "$FILE" ]; then
+process_file() {
+    local FILE="$1"
+    if [[ "$FILE" == *.csv ]]; then
         FILENAME=$(basename "$FILE")
         FILEBASE="${FILENAME%.*}"
         TEMP_FILE="${TEMP_DIR}/${FILENAME}"

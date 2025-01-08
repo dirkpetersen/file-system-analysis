@@ -29,6 +29,10 @@ else
     fi
 fi
 
+# Create temporary directory in /dev/shm for current user
+TEMP_DIR="/dev/shm/$USER"
+mkdir -p "$TEMP_DIR"
+
 # Create destination directory if it doesn't exist
 mkdir -p "$DEST"
 
@@ -39,6 +43,13 @@ for SRC in "$@"; do
         exit 1
     fi
 done
+
+# Set DuckDB pragmas
+PRAGMAS=""
+
+# Start process
+echo "Starting CSV to Parquet conversion process..."
+echo "Destination directory: $DEST"
 
 # Function to process a single file
 process_file() {
@@ -54,7 +65,7 @@ process_file() {
             
             # Convert to UTF-8 and optionally clean with sed
             printf "  Converting / cleaning ${FILEBASE} ... "
-            iconv -f ISO-8859-1 -t UTF-8 "$FILE" > "$TEMP_FILE"
+            iconv -f ISO-8859-1 -t UTF-8 "$FILE" > "${TEMP_FILE}"
             # Potentially replace strings in the path 
             #sed -E 's#/string1/#/#g; s#/string2/#/#g' > "$TEMP_FILE"
             echo "Done."
@@ -86,19 +97,6 @@ else
     done
 fi
 
-# Create destination directory if it doesn't exist
-mkdir -p "$DEST"
-
-# Create temporary directory in /dev/shm for current user
-TEMP_DIR="/dev/shm/$USER"
-mkdir -p "$TEMP_DIR"
-
-# Set DuckDB pragmas
-PRAGMAS=""
-
-# Process files
-echo "Starting CSV to Parquet conversion process..."
-echo "Destination directory: $DEST"
 
 
 # Cleanup temporary directory if empty

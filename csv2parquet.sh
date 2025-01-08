@@ -38,33 +38,9 @@ for SRC in "$@"; do
         echo "Error: '$SRC' does not exist"
         exit 1
     fi
-}
+done
 
-if [ -d "$1" ]; then
-    echo "Processing directory: $1"
-    for FILE in "$1"/*.csv; do
-        process_file "$FILE"
-    done
-else
-    for FILE in "$@"; do
-        process_file "$FILE"
-    done
-fi
-
-# Create destination directory if it doesn't exist
-mkdir -p "$DEST"
-
-# Create temporary directory in /dev/shm for current user
-TEMP_DIR="/dev/shm/$USER"
-mkdir -p "$TEMP_DIR"
-
-# Set DuckDB pragmas
-PRAGMAS=""
-
-# Process files
-echo "Starting CSV to Parquet conversion process..."
-echo "Destination directory: $DEST"
-
+# Function to process a single file
 process_file() {
     local FILE="$1"
     if [[ "$FILE" == *.csv ]]; then
@@ -97,7 +73,33 @@ process_file() {
             echo "Skipping ${FILENAME} - parquet file already exists"
         fi
     fi
-done
+}
+
+if [ -d "$1" ]; then
+    echo "Processing directory: $1"
+    for FILE in "$1"/*.csv; do
+        process_file "$FILE"
+    done
+else
+    for FILE in "$@"; do
+        process_file "$FILE"
+    done
+fi
+
+# Create destination directory if it doesn't exist
+mkdir -p "$DEST"
+
+# Create temporary directory in /dev/shm for current user
+TEMP_DIR="/dev/shm/$USER"
+mkdir -p "$TEMP_DIR"
+
+# Set DuckDB pragmas
+PRAGMAS=""
+
+# Process files
+echo "Starting CSV to Parquet conversion process..."
+echo "Destination directory: $DEST"
+
 
 # Cleanup temporary directory if empty
 rmdir "$TEMP_DIR" 2>/dev/null || true

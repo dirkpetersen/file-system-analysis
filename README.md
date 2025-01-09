@@ -246,7 +246,7 @@ aider --o1 --read CONVENTIONS.md sql/duplicates.sql
 aider --deepseek --read CONVENTIONS.md sql/duplicates.sql
 ```
 
-but the latest Anthropic Claude seems to be one of the most capable models as of early 2025 and it used by default in aider. To use Claude through AWS you launch it like this: 
+but the latest Anthropic Claude seems to be one of the most capable models as of early 2025 and `aider.chat` uses it by default. To use Claude through AWS you launch it like this: 
 
 ```
 aider --model bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0 --read CONVENTIONS.md sql/duplicates.sql

@@ -24,4 +24,4 @@ INNER JOIN FileInfo f2 ON
     AND f1."parent-inode" < f2."parent-inode"
 GROUP BY f1.basename, f1.st_size
 HAVING COUNT(*) > 1
-ORDER BY f1.st_size DESC, f1.filename;
+ORDER BY f1.st_size DESC, f1.basename;

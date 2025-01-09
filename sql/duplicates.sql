@@ -1,5 +1,5 @@
 SELECT 
-    SUBSTRING_INDEX(filename, '/', -1) AS file_name, 
+    substring(filename, strrpos(filename, '/') + 1) AS file_name, 
     st_size, 
     COUNT(*) as duplicate_count
 FROM 

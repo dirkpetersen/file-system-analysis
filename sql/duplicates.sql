@@ -4,7 +4,7 @@ WITH FileInfo AS (
         inode,
         filename,
         st_size,
-        parent_inode,
+        "parent-inode",
         pw_dirsum
     FROM '${PWALK_TABLE}'
     WHERE pw_dirsum = 0  -- Only actual files, not directories

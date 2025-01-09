@@ -1,5 +1,5 @@
 SELECT 
-    filename AS full_path,
+    ANY_VALUE(filename) AS full_path,
     substring(filename, length(filename) - strpos(reverse(filename), '/') + 2) AS file_name,
     st_size
 FROM '${PWALK_TABLE}'

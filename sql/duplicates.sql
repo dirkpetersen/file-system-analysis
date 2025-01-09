@@ -12,7 +12,7 @@ WITH FileInfo AS (
     AND st_size > 0       -- Exclude empty files
 )
 SELECT 
-    f1.basename AS filename,
+    ANY_VALUE(f1.basename) AS filename,
     f1.st_size AS file_size,
     COUNT(*) AS duplicate_count,
     GROUP_CONCAT(DISTINCT p.filename) AS locations

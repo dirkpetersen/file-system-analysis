@@ -51,10 +51,10 @@ If you do not have OpenAI or Anthropic API keys you can also use AWS Bedrock (Yo
 ## Data Collection and Conversion
 
 ### Create CSV Files
-Use PWalk to generate one CSV file per root folder:
+Run PWalk as root to generate one CSV file per root folder:
 
 ```bash
-pwalk --NoSnap --header /myfolder > output-file.csv
+sudo pwalk --NoSnap --header /myfolder > output-file.csv
 ```
 
 ### Convert to Parquet Format

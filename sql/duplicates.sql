@@ -13,7 +13,7 @@ SELECT
     a.filename AS filename,
     a.st_size AS file_size,
     COUNT(*) AS duplicate_count,
-    GROUP_CONCAT(DISTINCT a.parent_inode) AS parent_inodes
+    GROUP_CONCAT(DISTINCT a."parent-inode") AS parent_inodes
 FROM FileInfo a
 JOIN FileInfo b ON 
     a.filename = b.filename AND 

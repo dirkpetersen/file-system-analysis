@@ -4,24 +4,28 @@ WITH FileInfo AS (
         filename,
         regexp_extract(filename, '[^/]+$') as basename,  -- Extract the filename without path
         st_size,
-        "parent-inode",
-        pw_dirsum,
-        pw_fcount
+        "parent-inode"
     FROM '${PWALK_TABLE}'
     WHERE pw_fcount = -1  -- Only include files, not directories
     AND st_size > 0       -- Exclude empty files
+),
+DuplicateGroups AS (
+    SELECT 
+        LOWER(basename) as lower_basename,
+        st_size,
+        COUNT(*) as file_count,
+        array_agg("parent-inode") as parent_inodes
+    FROM FileInfo
+    GROUP BY LOWER(basename), st_size
+    HAVING COUNT(*) > 1
 )
 SELECT 
-    ANY_VALUE(f1.basename) AS filename,
-    f1.st_size AS file_size,
-    COUNT(*) AS duplicate_count,
+    ANY_VALUE(f.basename) AS filename,
+    d.st_size AS file_size,
+    d.file_count AS duplicate_count,
     GROUP_CONCAT(DISTINCT p.filename) AS locations
-FROM FileInfo f1
-JOIN '${PWALK_TABLE}' p ON f1."parent-inode" = p.inode
-INNER JOIN FileInfo f2 ON 
-    LOWER(f1.basename) = LOWER(f2.basename)
-    AND f1.st_size = f2.st_size 
-    AND f1."parent-inode" < f2."parent-inode"
-GROUP BY LOWER(f1.basename), f1.st_size
-HAVING COUNT(*) > 1
-ORDER BY f1.st_size DESC, LOWER(f1.basename);
+FROM DuplicateGroups d
+JOIN FileInfo f ON LOWER(f.basename) = d.lower_basename AND f.st_size = d.st_size
+JOIN '${PWALK_TABLE}' p ON p.inode = ANY(d.parent_inodes)
+GROUP BY d.lower_basename, d.st_size, d.file_count
+ORDER BY d.st_size DESC, d.lower_basename;

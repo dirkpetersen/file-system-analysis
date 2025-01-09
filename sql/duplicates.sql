@@ -1,5 +1,5 @@
 SELECT 
-    substring(filename, strrpos(filename, '/') + 1) AS file_name, 
+    substring(filename, length(filename) - strpos(reverse(filename), '/') + 1) AS file_name, 
     st_size, 
     COUNT(*) as duplicate_count
 FROM 

@@ -1,11 +1,1 @@
-SELECT 
-    "filename", 
-    st_size, 
-    COUNT(*) AS duplicate_count
-FROM 
-    '${PWALK_TABLE}'
-GROUP BY 
-    "filename", 
-    st_size
-HAVING 
-    COUNT(*) > 1;
+substring(filename, length(filename) - strpos(reverse(filename), '/') + 2) AS file_name

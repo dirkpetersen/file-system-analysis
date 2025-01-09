@@ -8,4 +8,4 @@ GROUP BY
     "filename", 
     st_size
 HAVING 
-    duplicate_count > 1;
+    COUNT(*) > 1;

@@ -12,7 +12,7 @@ WITH FileInfo AS (
     AND st_size > 0       -- Exclude empty files
 )
 SELECT 
-    f1.filename AS filename,
+    f1.basename AS filename,
     f1.st_size AS file_size,
     COUNT(*) AS duplicate_count,
     GROUP_CONCAT(DISTINCT p.filename) AS locations
@@ -22,6 +22,6 @@ INNER JOIN FileInfo f2 ON
     f1.basename = f2.basename
     AND f1.st_size = f2.st_size 
     AND f1."parent-inode" < f2."parent-inode"
-GROUP BY f1.filename, f1.st_size
+GROUP BY f1.basename, f1.st_size
 HAVING COUNT(*) > 1
 ORDER BY f1.st_size DESC, f1.filename;

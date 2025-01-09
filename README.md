@@ -33,6 +33,8 @@ echo "export ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}" >> ~/.apikeys
 source ~/.apikeys
 ```
 
+If you do not have OpenAI or Anthropic API keys you can also use AWS Bedrock (Your AWS account manager must assingn you the role `AWSBedrockFullAccess` and must also request once access to each of the models in the AWS console)
+
 ## Data Collection and Conversion
 
 ### Create CSV Files
@@ -44,16 +46,6 @@ pwalk --NoSnap --header /myfolder > output-file.csv
 
 ### Convert to Parquet Format
 Place all CSV files in one folder and convert them to Parquet format:
-
-```bash
-./csv2parquet.sh <csv-folder>
-```
-
-## Analyze File System Data
-
-### Using Existing Reports 
-
-For testing, we'll use the sample data in the `testdata` folder containing PWalk output files. You can also use your own generated files.
 
 ```
 $  ./csv2parquet.sh ./testdata
@@ -69,6 +61,13 @@ Converting installers.csv to installers.parquet ... Done.
 Conversion process completed!
 ```
 
+## Analyze File System Data
+
+
+### Using Existing Reports 
+
+For testing, we'll use the sample data in the `testdata` folder 
+
 The key advantage of DuckDB is that it doesn't require importing files into a database. You can query Parquet files directly, for example:
 
 ```
@@ -81,6 +80,19 @@ duckdb -s "select count(*) from './testdata/*.parquet'"
 │        35929 │
 └──────────────┘
 ```
+
+You can also merge all the parquet files into a single file 
+
+```sql
+duckdb -s "COPY (SELECT * FROM read_parquet('./testdata/*.parquet')) TO 'output_merged.parquet' (FORMAT PARQUET);"
+```
+
+This has perhaps 2 disadvantages: 
+
+- **Difficulty querying a subset of files**: When dealing with a large number of files, creating a subset becomes more challenging. A practical workaround is to create a new folder, add symbolic links to the desired subset of files, and point DuckDB to this folder containing the symlinks.
+
+- **Performance considerations with many files**: Using multiple smaller files can often be faster because DuckDB can more effectively parallelize the I/O operations across them.
+
 
 Let's try some of the pre-built SQL reports. The simplest is `file-extension-summary.sql`, which shows the size in GiB and percentage of total storage for each file type:
 
@@ -113,7 +125,7 @@ In the output, `AccD` shows the days since last access (e.g., 531 days for the 5
 
 ### Design new reports 
 
-Since writing SQL can be a bit tiresome if you don't do it every day, we want to use an LLM for. We put instructions (aka. System Prompt) for the LLM into the CONVENTIONS.md file. You can paste those into ChatGPT, Claude or another LLM along with your request and ask for it to design your sql query but it is more efficient to check out this repository and use `aider.chat`. 
+Writing SQL can feel daunting if it’s not something you do regularly. To make the process easier, we use a Large Language Model (LLM). The instructions for the LLM, also known as the system prompt, are stored in the CONVENTIONS.md file. You can copy these instructions and use them with tools like ChatGPT, Claude, or other LLMs to help design your SQL query. However, a more efficient approach is to check out this git repository and use the `aider.chat` tool directly:
 
 ```
 git clone git@github.com:dirkpetersen/file-system-analysis.git
@@ -132,7 +144,8 @@ cd file-system-analysis
 alias aider='aider --dark-mode --vim --cache-prompts'
 ```
 
-Let's say you want to design a new SQL file that is stored in the `sql` subfolder. We want to get a list of duplicate files. This can be a complex problem but we would like to query for files that have the same file name and file size and are stored in different folders. Let's start our aider prompt with the CONVENTIONS.md file in read-only mode because we do not want aider to change it, this is what we get: 
+Let's say you want to create a new query using a SQL file located in the sql subfolder. Your goal is to identify duplicate files. While this can be a complex task, we’ll simplify it by focusing on files that share the same name and size, even though they are stored in different directories.
+To begin, let’s prompt Aider with the `CONVENTIONS.md` file in read-only mode, ensuring it remains unchanged. Here's the aider console we get: 
 
 
 ```
@@ -152,13 +165,13 @@ Editable: sql/duplicates.sql
 
 ```
 
-Now paste these instrunctions at the prompt 
+Now paste these instructions at the prompt:
 
 ```
 Write a SQL query that finds all duplicate files across the entire file system. A duplicate is defined as a file that has the same filename stored in different folders and has the same size in both locations. To be clear: We are looking for multiple files with the same filename and size but stored in different folders.
 ```
 
-but default we are getting a response from claude: 
+by default we are getting a response from claude: 
 
 ```
 
@@ -205,15 +218,11 @@ This query:
 and testing this query, we get:
 
 ```
-./report.sh ./testdata/ sql/duplicates.sql
+./report.sh ./testdata/ sql/duplicates.sql | head -4
 file_name,st_size,duplicate_locations,occurrence_count
 proof.msi,2109440,/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/proofing.en-us/proof.fr/proof.msi\n/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/proofing.en-us/proof.es/proof.msi,2
 branding.xml,336313,/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/office.en-us/branding.xml\n/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/access.en-us/access.en-us/branding.xml,2
 .DS_Store,6148,/home/dsimsb/groups/RDNFTS/.DS_Store\n/home/dsimsb/groups/RDNFTS/Tools/.DS_Store,2
-setup.xml,1795,/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/publisher.en-us/setup.xml\n/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/infopath.en-us/setup.xml,2
-proof.xml,1665,/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/proofing.en-us/proof.fr/proof.xml\n/home/dsimsb/groups/RDNFTS/Office/Office 2016 Professional/proofing.en-us/proof.es/proof.xml,2
-OHSURDNCert.p7b,1336,/home/dsimsb/groups/RDNFTS/Tools/certinstall/OHSURDNCert.p7b\n/home/dsimsb/groups/RDNFTS/Tools/certinstall2/certinstall/OHSURDNCert.p7b,2
-certinstall.bat,82,/home/dsimsb/groups/RDNFTS/Tools/certinstall/certinstall.bat\n/home/dsimsb/groups/RDNFTS/Tools/certinstall2/certinstall/certinstall.bat,2
 ```
 
 You can also force aider to use other models such as 
@@ -224,4 +233,8 @@ aider --o1 --read CONVENTIONS.md sql/duplicates.sql
 aider --deepseek --read CONVENTIONS.md sql/duplicates.sql
 ```
 
-but the latest Claude seems to be one of the most capable models as of early 2025 
+but the latest Anthropic Claude seems to be one of the most capable models as of early 2025 and it used by default in aider. To use Claude through AWS you launch it like this: 
+
+```
+aider --model bedrock/us.anthropic.claude-3-5-sonnet-20241022-v2:0 --read CONVENTIONS.md sql/duplicates.sql
+```

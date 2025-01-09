@@ -2,6 +2,19 @@
 
 Analyze file metadata in your POSIX file systems
 
+- [File System Analysis](#file-system-analysis)
+  - [Installing Tools](#installing-tools)
+    - [Install PWalk to Gather Raw Data](#install-pwalk-to-gather-raw-data)
+    - [Install DuckDB to Convert and Analyze Data](#install-duckdb-to-convert-and-analyze-data)
+    - [Install Aider to generate SQL and code](#install-aider-to-generate-sql-and-code)
+  - [Data Collection and Conversion](#data-collection-and-conversion)
+    - [Create CSV Files](#create-csv-files)
+    - [Convert to Parquet Format](#convert-to-parquet-format)
+  - [Analyze File System Data](#analyze-file-system-data)
+    - [Using Existing Reports](#using-existing-reports)
+    - [Design new reports](#design-new-reports)
+
+
 ## Installing Tools
 
 
@@ -24,7 +37,7 @@ curl --fail --location --progress-bar --output duckdb_cli-linux-amd64.zip \
     rm duckdb_cli-linux-amd64.zip
 ```
 
-### Install Aider to generate SQL and code
+### Install Aider to generate SQL and code 
 
 ```
 curl -LsSf https://aider.chat/install.sh | sh

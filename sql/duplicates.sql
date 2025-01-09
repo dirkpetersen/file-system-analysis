@@ -38,10 +38,10 @@ file_paths AS (
 SELECT 
     a.filename,
     a.st_size,
-    a.full_path AS path_a,
-    b.full_path AS path_b,
-    a.st_mtime AS mtime_a,
-    b.st_mtime AS mtime_b
+    COUNT(*) AS duplicate_count,
+    MIN(a.full_path) AS example_path,
+    MIN(a.st_mtime) AS oldest_mtime,
+    MAX(a.st_mtime) AS newest_mtime
 FROM file_paths a
 JOIN file_paths b
     ON a.filename = b.filename
@@ -52,4 +52,6 @@ WHERE a.pw_dirsum = 0  -- Ensure we're only looking at files
     AND a.filename != '.'  -- Exclude special directory entries
     AND a.filename != '..'
     AND a.filename != ''   -- Exclude empty filenames
-ORDER BY a.filename, a.st_size;
+GROUP BY a.filename, a.st_size
+HAVING COUNT(*) > 0  -- Only show files with duplicates
+ORDER BY duplicate_count DESC, a.st_size DESC;

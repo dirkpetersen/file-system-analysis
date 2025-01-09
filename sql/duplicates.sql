@@ -17,13 +17,10 @@ SELECT
     GROUP_CONCAT(DISTINCT p.filename) AS locations
 FROM FileInfo f1
 JOIN '${PWALK_TABLE}' p ON f1."parent-inode" = p.inode
-WHERE EXISTS (
-    SELECT *
-    FROM FileInfo f2
-    WHERE f1.filename = f2.filename
+INNER JOIN FileInfo f2 ON 
+    f1.filename = f2.filename
     AND f1.st_size = f2.st_size 
-    AND f1."parent-inode" != f2."parent-inode"
-)
+    AND f1."parent-inode" < f2."parent-inode"
 GROUP BY f1.filename, f1.st_size
 HAVING COUNT(*) > 1
 ORDER BY f1.st_size DESC, f1.filename;

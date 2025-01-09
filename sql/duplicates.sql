@@ -18,9 +18,9 @@ SELECT
 FROM FileInfo f1
 JOIN '${PWALK_TABLE}' p ON f1."parent-inode" = p.inode
 WHERE EXISTS (
-    SELECT 1 
-    FROM FileInfo f2 
-    WHERE f1.filename = f2.filename 
+    SELECT *
+    FROM FileInfo f2
+    WHERE f1.filename = f2.filename
     AND f1.st_size = f2.st_size 
     AND f1."parent-inode" != f2."parent-inode"
 )

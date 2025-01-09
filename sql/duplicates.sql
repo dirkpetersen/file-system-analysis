@@ -17,6 +17,6 @@ SELECT
   f.locations as parent_inodes,
   GROUP_CONCAT(DISTINCT p.filename) as parent_folders
 FROM FileGroups f
-JOIN read_csv_auto('*.csv') c ON c.inode IN (SELECT UNNEST(string_split(f.locations, ',')))
+JOIN read_csv_auto('*.csv') c ON c.inode::VARCHAR IN (string_split_regex(f.locations, ','))
 JOIN read_csv_auto('*.csv') p ON p.inode = c.parent_inode
 ORDER BY f.st_size DESC, f.filename;

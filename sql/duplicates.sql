@@ -5,10 +5,10 @@ WITH file_paths AS (
         st_mtime,
         pw_dirsum,
         "parent-inode",
-        -- Construct full path by combining parent directory and filename
+        -- Construct full path using parent-inode and filename
         CASE 
             WHEN filename = '' THEN NULL  -- Skip empty filenames
-            ELSE regexp_replace(parent_directory || '/' || filename, '//+', '/') 
+            ELSE regexp_replace('/' || "parent-inode" || '/' || filename, '//+', '/') 
         END AS full_path
     FROM '${PWALK_TABLE}'
 )

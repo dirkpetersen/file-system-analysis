@@ -2,6 +2,7 @@
 WITH FileInfo AS (
     SELECT 
         filename,
+        regexp_extract(filename, '[^/]+$') as basename,  -- Extract the filename without path
         st_size,
         "parent-inode",
         pw_dirsum,
@@ -18,7 +19,7 @@ SELECT
 FROM FileInfo f1
 JOIN '${PWALK_TABLE}' p ON f1."parent-inode" = p.inode
 INNER JOIN FileInfo f2 ON 
-    f1.filename = f2.filename
+    f1.basename = f2.basename
     AND f1.st_size = f2.st_size 
     AND f1."parent-inode" < f2."parent-inode"
 GROUP BY f1.filename, f1.st_size

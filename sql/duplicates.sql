@@ -1,16 +1,39 @@
-WITH file_paths AS (
+WITH RECURSIVE path_builder AS (
     SELECT 
         filename,
         st_size,
         st_mtime,
         pw_dirsum,
         "parent-inode",
-        -- Construct full path using parent-inode and filename
-        CASE 
-            WHEN filename = '' THEN NULL  -- Skip empty filenames
-            ELSE regexp_replace('/' || "parent-inode" || '/' || filename, '//+', '/') 
-        END AS full_path
+        filename AS full_path,
+        inode
     FROM '${PWALK_TABLE}'
+    WHERE "parent-inode" = 0  -- Start with root directories
+    
+    UNION ALL
+    
+    SELECT 
+        f.filename,
+        f.st_size,
+        f.st_mtime,
+        f.pw_dirsum,
+        f."parent-inode",
+        regexp_replace(pb.full_path || '/' || f.filename, '//+', '/'),
+        f.inode
+    FROM '${PWALK_TABLE}' f
+    JOIN path_builder pb
+        ON f."parent-inode" = pb.inode
+),
+file_paths AS (
+    SELECT 
+        filename,
+        st_size,
+        st_mtime,
+        pw_dirsum,
+        "parent-inode",
+        full_path
+    FROM path_builder
+    WHERE filename != ''  -- Skip empty filenames
 )
 SELECT 
     a.filename,

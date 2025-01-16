@@ -1,6 +1,6 @@
 # File System Analysis
 
-Analyze file metadata in your POSIX file systems
+Analyze file metadata in your POSIX file systems 
 
 - [File System Analysis](#file-system-analysis)
   - [Installing Tools](#installing-tools)
@@ -12,6 +12,7 @@ Analyze file metadata in your POSIX file systems
     - [Convert to Parquet Format](#convert-to-parquet-format)
   - [Analyze File System Data](#analyze-file-system-data)
     - [Using Existing Reports](#using-existing-reports)
+    - [Using user and group names instead of uid and gid](#using-user-and-group-names-instead-of-uid-and-gid)
     - [Design new reports](#design-new-reports)
 
 
@@ -140,7 +141,7 @@ In the output, `AccD` shows the days since last access (e.g., 531 days for the 5
 
 As only uid and gid numbers are stored in the file system metadata, PWalk will not do the mapping to actual user names and group names as that would be too slow. But we can easily do that by running a few commands.  
 
-First, we would like to create two csv files with all the uids and gids that we have found in our file system. ("Distinct" means getting ridof duplicates). run these 2 commands:
+First, we would like to create two csv files with all the uids and gids that we have found in our file system. ("Distinct" means getting rid of duplicates). run these 2 commands:
 
 ```
 duckdb --csv -s "SELECT DISTINCT UID FROM './testdata/*.parquet';" > uids.csv
@@ -169,7 +170,7 @@ nobody,65534,Unknown,100113,2022-05-09 13:38:25,/home/dsimsb/groups/derm_image_d
 nobody,65534,Unknown,100113,2022-05-09 13:38:08,/home/dsimsb/groups/derm_image_data/Raidshare2/IPTCX
 ```
 
-The query also uses the the COALESCE function that replaces a NULL value with a predetermined value 'Unknown'
+The query also uses the the COALESCE function that replaces a NULL value with a predetermined value 'Unknown'. You also see that you can easily combine Parquet files with CSV files in a single query.
 
 ### Design new reports 
 

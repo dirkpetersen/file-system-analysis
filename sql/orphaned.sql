@@ -2,7 +2,7 @@
 SELECT 
     u.username as User,
     COALESCE(g.groupname, 'Unknown') as Group,
-    strftime(TIMESTAMP_SECONDS(st_mtime), '%Y-%m-%d %H:%M:%S') as ModTime,
+    strftime(TO_TIMESTAMP(st_mtime), '%Y-%m-%d %H:%M:%S') as ModTime,
     filename
 FROM '${PWALK_TABLE}' p
 LEFT JOIN 'groups.csv' g ON p.GID = g.GID 

@@ -136,6 +136,41 @@ User,AccD,ModD,GiB,MiBAvg,Folder,Group,TiB,FileCount,DirSize
 
 In the output, `AccD` shows the days since last access (e.g., 531 days for the 57 GiB folder), while `ModD` shows days since last modification.
 
+### Using user and group names instead of uid and gid 
+
+As only uid and gid numbers are stored in the file system metadata, PWalk will not do the mapping to actual user names and group names as that would be too slow. But we can easily do that by running a few commands.  
+
+First, we would like to create two csv files with all the uids and gids that we have found in our file system. ("Distinct" means getting ridof duplicates). run these 2 commands:
+
+```
+duckdb --csv -s "SELECT DISTINCT UID FROM './testdata/*.parquet';" > uids.csv
+duckdb --csv -s "SELECT DISTINCT GID FROM './testdata/*.parquet';" > gids.csv
+```
+
+Then you use `mk-users-groups-csv.py` to create a `users.csv` and a `groups.csv` file. If there is a uid or gid that is 'Unknown' it means that a user or group cannot be found in your AIM system and you could assume that the data might need a new owner
+
+```
+./mk-users-groups-csv.py
+.
+.
+Processed UID: 109, User: Unknown
+Processed UID: 105, User: Unknown
+Processed UID: 116, User: Unknown
+```
+
+Now let's try the `orphaned.sql` query that uses sql `left joins` to link with users.csv and group.csv. It will show files and folders where either the user or the group is 'Unknown'. You can also modify the query to return files where both the User and the Group are unknown.
+
+```
+./report.sh ./testdata/ ./sql/orphaned.sql | head -4
+
+User,UID,Group,GID,ModTime,filename
+nobody,65534,Unknown,100113,2022-05-16 17:10:39,/home/dsimsb/groups/derm_image_data/Raidshare2/IPTC2021
+nobody,65534,Unknown,100113,2022-05-09 13:38:25,/home/dsimsb/groups/derm_image_data/Raidshare2/Merlin
+nobody,65534,Unknown,100113,2022-05-09 13:38:08,/home/dsimsb/groups/derm_image_data/Raidshare2/IPTCX
+```
+
+The query also uses the the COALESCE function that replaces a NULL value with a predetermined value 'Unknown'
+
 ### Design new reports 
 
 Writing SQL can feel daunting if it’s not something you do regularly. To make the process easier, we use a Large Language Model (LLM). The instructions for the LLM, also known as the system prompt, are stored in the CONVENTIONS.md file. You can copy these instructions and use them with tools like ChatGPT, Claude, or other LLMs to help design your SQL query. However, a more efficient approach is to check out this git repository and use the `aider.chat` tool directly:
@@ -154,7 +189,7 @@ switch to the git repos and prepare your aider global settings by alias
 
 ```
 cd file-system-analysis
-alias aider='aider --dark-mode --vim --cache-prompts'
+alias aider='aider --cache-prompts --dark-mode --vim --multiline'
 ```
 
 Let's say you want to create a new query using a SQL file located in the sql subfolder. Your goal is to identify duplicate files. While this can be a complex task, we’ll simplify it by focusing on files that share the same name and size, even though they are stored in different directories.

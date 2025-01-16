@@ -139,16 +139,19 @@ In the output, `AccD` shows the days since last access (e.g., 531 days for the 5
 
 ### Using user and group names instead of uid and gid 
 
-As only uid and gid numbers are stored in the file system metadata, PWalk will not do the mapping to actual user names and group names as that would be too slow. But we can easily do that by running a few commands.  
-
-First, we would like to create two csv files with all the uids and gids that we have found in our file system. ("Distinct" means getting rid of duplicates). run these 2 commands:
+File systems store user and group information as numeric IDs (UIDs and GIDs) in their metadata rather than human-readable names. While PWalk maintains this numeric format for performance reasons, we can create a mapping to the actual user and group names in a post-processing step.
+Let's first extract all unique UIDs and GIDs (`distinct`) found in our file system scan by running these commands, which will create two separate CSV files:
 
 ```
 duckdb --csv -s "SELECT DISTINCT UID FROM './testdata/*.parquet';" > uids.csv
 duckdb --csv -s "SELECT DISTINCT GID FROM './testdata/*.parquet';" > gids.csv
 ```
 
-Then you use `mk-users-groups-csv.py` to create a `users.csv` and a `groups.csv` file. If there is a uid or gid that is 'Unknown' it means that a user or group cannot be found in your AIM system and you could assume that the data might need a new owner
+Then you use `mk-users-groups-csv.py` to create a `users.csv` and a `groups.csv` file. When you encounter an 'Unknown' UID or GID in the results, it indicates one of several potential scenarios:
+
+- The user or group account has been deleted from your AIM system, but files owned by them still exist
+- The files were transferred from another system where these UIDs/GIDs were valid
+- The user/group was never properly set up in your AIM system
 
 ```
 ./mk-users-groups-csv.py
